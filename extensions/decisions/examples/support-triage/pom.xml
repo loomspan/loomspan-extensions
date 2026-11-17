@@ -14,4 +14,9 @@
     <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-surefire-plugin</artifactId><version>3.5.2</version><configuration><systemPropertyVariables><java.io.tmpdir>${project.build.directory}/traces</java.io.tmpdir></systemPropertyVariables></configuration></plugin>
     <plugin><groupId>org.codehaus.mojo</groupId><artifactId>exec-maven-plugin</artifactId><version>3.5.0</version><configuration><mainClass>ai.loomspan.examples.triage.TriageApplication</mainClass></configuration></plugin>
   </plugins></build>
+  <profiles><profile><id>console</id><properties><loomspan.console.enabled>true</loomspan.console.enabled></properties>
+    <build><plugins><plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-surefire-plugin</artifactId>
+      <configuration><systemPropertyVariables><loomspan.console.enabled>true</loomspan.console.enabled><loomspan.console.executable>${loomspan.console.executable}</loomspan.console.executable></systemPropertyVariables></configuration>
+    </plugin></plugins></build>
+  </profile></profiles>
 </project>

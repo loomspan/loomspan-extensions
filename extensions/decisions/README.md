@@ -19,6 +19,8 @@ The root POM only aggregates local builds; this artifact owns its version.
   prefixes, fixed limits, retries, lifecycle, diagnostics and result semantics.
 - [Provider contract and sources](docs/provider-contract.md): dated TypeSafe/model/
   route evidence and synthetic fixtures.
+- [Tested builds and verification](docs/tested-builds.md): final native-free build
+  identities, advanced consumer/Console commands and evidence boundaries.
 - [Changelog](CHANGELOG.md).
 
 ## Tested local combination
@@ -26,7 +28,8 @@ The root POM only aggregates local builds; this artifact owns its version.
 | Component | Version |
 | --- | --- |
 | Java | 21.0.2, JetBrains runtime |
-| Framework | `ai.loomspan:loomspan-spring-boot-starter:1.0.0-beta.10-SNAPSHOT`, source `d992449e8eba0734c466de9a1f05526c840ba608` |
+| Framework | `ai.loomspan:loomspan-spring-boot-starter:1.0.0-beta.10-SNAPSHOT`, native-free source `fa1ca190d393b63314846e604a6bbd8157ed8eab` |
+| Console | `1.0.0-beta.10-SNAPSHOT`, same Framework source; Go 1.26.5, Node 24.18.0, npm 12.0.2 |
 | Extension contract | `ai.loomspan.api.extensions.v1.SkillExecutorInvocation` and `ExecutorDiagnostics` |
 | Spring Boot | 4.2.0-RC2 |
 | Apache HttpClient | 5.6.5 |
@@ -45,7 +48,7 @@ Keep `loomspan-framework` beside this repository. Test the matching Framework
 checkout and install its dependency locally from that checkout:
 
 ```powershell
-./mvnw.cmd -B "-Dtest=LoomspanPublicSurfaceArchitectureTest,VersionedExecutorInvocationTest,ExecutorInvocationLifecycleIntegrationTest,ExecutorDiagnosticsIntegrationTest,DefaultExecutorDiagnosticsTest,BoundedExecutorDiagnosticCaptureTest,MissionLifecycleTest" test
+./mvnw.cmd test
 ./mvnw.cmd -DskipTests install
 ```
 
@@ -67,3 +70,14 @@ requires no provider credentials, account access, live inference or Console.
 Installing the pack does not expose a callable skill. Applications supply
 resolved provider settings; the transport never finds environment credentials or
 native model connections.
+
+## Maintenance and support
+
+The Decisions repository maintainers own this artifact, its provider integration,
+recipe and documentation; Framework maintainers own generic execution and Console.
+Report reproducible integration issues with the tested build identities and local
+fixture. Fixes arrive through a pack dependency update. These unpublished development
+snapshots have no promised release cadence, support SLA or provider service guarantee.
+Public Maven publication and product releases are separate maintainer decisions.
+TypeSafe is the v1 scope; Gemini/OpenAI, images/Box, live quality/latency/cost evaluation,
+catalog infrastructure and the sidecar suite remain future work.
