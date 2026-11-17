@@ -1,0 +1,9 @@
+{
+  "model": "jev-1.14.0",
+  "state": "The parcel arrived damaged. This is the second contact.",
+  "questions": {
+    "team": {"type": "choice", "instructions": "Select a team", "criteria": {"returns": "Damaged goods", "billing": "Payment questions"}},
+    "repeat": {"type": "noul", "instructions": "Is this a repeat contact?"},
+    "impact": {"type": "score", "criteria": ["Minor inconvenience", "Cannot use the purchase"]}
+  }
+}

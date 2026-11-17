@@ -1,0 +1,10 @@
+{
+  "model": "jev-1.14.0",
+  "answers": {
+    "team": {"type": "choice", "choice": "returns", "confidence": 0.8, "probabilities": {"returns": 0.9, "billing": 0.1}},
+    "repeat": {"type": "noul", "noul": 0.95},
+    "impact": {"type": "score", "score": 0.8, "confidence": 0.6, "legend": {"0": "Minor inconvenience", "1": {"description": "Cannot use the purchase"}}, "probabilities": {"0": 0.2, "1": 0.8}}
+  },
+  "usage": {"input_tokens": 80, "output_tokens": 16},
+  "future_field": {"preserve": true}
+}

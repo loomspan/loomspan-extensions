@@ -1,0 +1,9 @@
+{
+  "model": "jev-latest",
+  "state": {"message": "The parcel arrived damaged.", "contact_count": 2},
+  "questions": {
+    "team": {"type": "choice", "instructions": {"task": "Select a team"}, "criteria": {"returns": "Damaged goods", "billing": "Payment questions"}},
+    "repeat": {"type": "noul", "instructions": "Is this a repeat contact?", "criteria": {"true": "At least two contacts", "false": "First contact"}},
+    "impact": {"type": "score", "instructions": ["Rate customer impact"], "criteria": ["Minor inconvenience", {"description": "Cannot use the purchase"}]}
+  }
+}

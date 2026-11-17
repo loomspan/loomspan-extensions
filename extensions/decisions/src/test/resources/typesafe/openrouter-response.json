@@ -1,0 +1,1 @@
+{"id":"fixture-1","provider":"TypeSafe","model":"typesafe/jev-1.14.0","answers":{"repeat":{"type":"noul","noul":0.95}},"usage":{"input_tokens":80,"output_tokens":16,"cost":0.0001},"refusal":null,"unknown":{"kept":true}}

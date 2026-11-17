@@ -2,8 +2,9 @@
 
 Independently versioned executor packs for Loomspan Framework.
 
-This repository currently contains a Maven scaffold, not a working or published
-extension. Start with [Loomspan Decisions](extensions/decisions/README.md).
+The Decisions module contains a tested TypeSafe transport and Spring resource
+management. It has no callable executor or consuming application yet, and has not
+been published. Start with [Loomspan Decisions](extensions/decisions/README.md).
 
 ## Local development
 
@@ -12,11 +13,12 @@ current Java baseline. Validate all module descriptors from this directory:
 
 ```shell
 mvn validate
+mvn -f extensions/decisions/pom.xml verify
 ```
 
 The root POM aggregates local builds. Each extension owns its own POM and version
-and can be built directly. No Framework or Spring Boot dependency has been selected
-for the scaffold; supported runtime combinations will be recorded after integration.
+and can be built directly. The pack README records its tested local Framework,
+Boot and client dependencies and explains local dependency installation.
 
 ## Planning source
 

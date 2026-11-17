@@ -1,33 +1,61 @@
 # Loomspan Decisions
 
-Status: repository scaffold only. The executor, auto-configuration, and consuming
-example are not implemented. Nothing has been published.
+TypeSafe-focused transport for Loomspan's v1 executor invocation contract.
+The module currently provides shared HTTP connections, captured settings, bounded
+retries/deadlines, JSON fidelity, diagnostics and Spring shutdown cleanup. There is
+no callable executor or runnable consumer application in this build. Internal Java
+helpers and auto-configuration beans are not an application customization API.
+Nothing has been published.
 
-Initial unpublished coordinates: `ai.loomspan:loomspan-decisions:0.1.0-SNAPSHOT`.
-The pack owns this version independently of the root aggregator. Publication and
-support policy remain to be finalized; these are not installation instructions for
-an available dependency.
+Unpublished coordinates: `ai.loomspan:loomspan-decisions:0.1.0-SNAPSHOT`.
+The root POM only aggregates local builds; this artifact owns its version.
 
-## Development
+## Documentation
 
-From the repository root:
+- [Transport settings and behavior](docs/transport.md): credentials, endpoint
+  prefixes, fixed limits, retries, lifecycle, diagnostics and result semantics.
+- [Provider contract and sources](docs/provider-contract.md): dated TypeSafe/model/
+  route evidence and synthetic fixtures.
+- [Changelog](CHANGELOG.md).
 
-```shell
-mvn -f extensions/decisions/pom.xml validate
+## Tested local combination
+
+| Component | Version |
+| --- | --- |
+| Java | 21.0.2, JetBrains runtime |
+| Framework | `ai.loomspan:loomspan-spring-boot-starter:1.0.0-beta.10-SNAPSHOT`, source `81bd1d14196bfab4d954a3ff4abcb9f6798369c3` |
+| Extension contract | `ai.loomspan.api.extensions.v1.SkillExecutorInvocation` and `ExecutorDiagnostics` |
+| Spring Boot | 4.2.0-RC2 |
+| Apache HttpClient | 5.6.5 |
+| Jackson databind | 3.1.8 (`tools.jackson`) |
+| Tests | JUnit Jupiter 6.1.3, MockWebServer 4.12.0 |
+| Maven | 3.9.6; Framework wrapper 3.9.11 |
+
+These are tested local snapshots/prereleases, not released compatibility promises.
+Framework's existing configuration numeric decoding applies before pack execution;
+high-precision declaration decimals may already have rounded. The transport
+preserves prepared bytes and received JSON numbers without adding rounding.
+
+## Local build
+
+Keep `loomspan-framework` beside this repository. Test the matching Framework
+checkout and install its dependency locally from that checkout:
+
+```powershell
+./mvnw.cmd -B "-Dtest=LoomspanPublicSurfaceArchitectureTest,VersionedExecutorInvocationTest,ExecutorInvocationLifecycleIntegrationTest,ExecutorDiagnosticsIntegrationTest,DefaultExecutorDiagnosticsTest,BoundedExecutorDiagnosticCaptureTest,MissionLifecycleTest" test
+./mvnw.cmd -DskipTests install
 ```
 
-This validates the descriptor only. The scaffold targets Java 21; no Framework/Boot
-runtime combination has been tested. Add the identified Framework dependency when
-its supported versioned invocation contract is implemented.
+Then from this repository root:
 
-## Code and example ownership
+```powershell
+mvn -B validate
+mvn -B -f extensions/decisions/pom.xml verify
+mvn -B -f extensions/decisions/pom.xml dependency:tree
+```
 
-- `src/main/java` and `src/main/resources`: pack implementation and registration resources.
-- `src/test/java` and `src/test/resources`: tests and deterministic provider fixtures.
-- [Support-triage example](examples/support-triage/README.md): application source and
-  repeatable integration instructions when implemented.
-- [Changelog](CHANGELOG.md): changes to this pack.
-
-Design decisions and acceptance requirements live in the root README's
-[planning source](../../README.md#planning-source). Configuration, result, Console,
-and troubleshooting documentation will be added alongside the implemented behavior.
+`verify` runs all unit, Spring and real local HTTP tests through Surefire. It
+requires no provider credentials, account access, live inference or Console.
+Installing the transport does not expose a callable skill. Applications supply
+resolved provider settings; the transport never finds environment credentials or
+native model connections.
