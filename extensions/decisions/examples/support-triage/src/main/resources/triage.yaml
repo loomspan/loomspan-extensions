@@ -1,0 +1,34 @@
+name: triage
+description: Assess a support ticket using application-owned criteria
+executor: typesafe
+rbac_roles: [SUPPORT_TRIAGE]
+input_schema:
+  type: object
+  properties:
+    ticket: {type: object, additionalProperties: true}
+  required: [ticket]
+  additionalProperties: false
+config:
+  request:
+    model: jev-latest
+    state: null
+    questions:
+      team:
+        type: choice
+        instructions: Select the team responsible for the ticket.
+        criteria:
+          returns: Damaged or unwanted goods
+          billing: Payments or invoices
+          other: Neither returns nor billing
+      repeat:
+        type: noul
+        instructions: Has the customer contacted support more than once?
+      impact:
+        type: score
+        instructions: Rate the practical impact on the customer.
+        criteria:
+          - Minor inconvenience; purchase remains usable
+          - Purchase partly usable
+          - Purchase cannot be used
+  bindings:
+    /state: /ticket

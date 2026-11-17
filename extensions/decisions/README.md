@@ -1,9 +1,10 @@
 # Loomspan Decisions
 
-TypeSafe-focused transport for Loomspan's v1 executor invocation contract.
-The module currently provides shared HTTP connections, captured settings, bounded
-retries/deadlines, JSON fidelity, diagnostics and Spring shutdown cleanup. There is
-no callable executor or runnable consumer application in this build. Internal Java
+TypeSafe Choice, Noul and Score through Loomspan's v1 executor invocation contract.
+Installation registers the reference-only `default-typesafe` executor. Applications
+declare callable YAML skills and own their questions, criteria and policy. Shared
+HTTP connections, bounded retries/deadlines, complete native JSON results and
+diagnostics run without Console. Internal Java
 helpers and auto-configuration beans are not an application customization API.
 Nothing has been published.
 
@@ -12,6 +13,8 @@ The root POM only aggregates local builds; this artifact owns its version.
 
 ## Documentation
 
+- [Executor configuration and binding](docs/executor.md).
+- [Runnable support-triage recipe](examples/support-triage/README.md).
 - [Transport settings and behavior](docs/transport.md): credentials, endpoint
   prefixes, fixed limits, retries, lifecycle, diagnostics and result semantics.
 - [Provider contract and sources](docs/provider-contract.md): dated TypeSafe/model/
@@ -23,7 +26,7 @@ The root POM only aggregates local builds; this artifact owns its version.
 | Component | Version |
 | --- | --- |
 | Java | 21.0.2, JetBrains runtime |
-| Framework | `ai.loomspan:loomspan-spring-boot-starter:1.0.0-beta.10-SNAPSHOT`, source `81bd1d14196bfab4d954a3ff4abcb9f6798369c3` |
+| Framework | `ai.loomspan:loomspan-spring-boot-starter:1.0.0-beta.10-SNAPSHOT`, source `d992449e8eba0734c466de9a1f05526c840ba608` |
 | Extension contract | `ai.loomspan.api.extensions.v1.SkillExecutorInvocation` and `ExecutorDiagnostics` |
 | Spring Boot | 4.2.0-RC2 |
 | Apache HttpClient | 5.6.5 |
@@ -51,11 +54,16 @@ Then from this repository root:
 ```powershell
 mvn -B validate
 mvn -B -f extensions/decisions/pom.xml verify
+mvn -B -f extensions/decisions/pom.xml install
+mvn -B -f extensions/decisions/examples/support-triage/pom.xml verify
 mvn -B -f extensions/decisions/pom.xml dependency:tree
 ```
 
-`verify` runs all unit, Spring and real local HTTP tests through Surefire. It
+Pack `verify` runs unit, Spring and real local HTTP tests through Surefire. The
+separate example `verify` is also required: it exercises the installed JAR through
+normal Boot discovery and supported Framework APIs, including parent composition.
+It
 requires no provider credentials, account access, live inference or Console.
-Installing the transport does not expose a callable skill. Applications supply
+Installing the pack does not expose a callable skill. Applications supply
 resolved provider settings; the transport never finds environment credentials or
 native model connections.

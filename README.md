@@ -2,9 +2,9 @@
 
 Independently versioned executor packs for Loomspan Framework.
 
-The Decisions module contains a tested TypeSafe transport and Spring resource
-management. It has no callable executor or consuming application yet, and has not
-been published. Start with [Loomspan Decisions](extensions/decisions/README.md).
+The Decisions module provides a reference-only TypeSafe executor, shared transport
+and a runnable packaged-artifact support-triage example. It has not been published.
+Start with [Loomspan Decisions](extensions/decisions/README.md).
 
 ## Local development
 
@@ -36,7 +36,7 @@ Do not copy the decision contracts into this repository.
 | `extensions/decisions/pom.xml` | Independently versioned pack |
 | `extensions/decisions/src/main/` | Pack implementation and resources |
 | `extensions/decisions/src/test/` | Pack tests and deterministic provider fixtures |
-| `extensions/decisions/examples/support-triage/` | Consuming example source, once implemented |
+| `extensions/decisions/examples/support-triage/` | Runnable consumer and installed-JAR verification |
 
 The pack README is the initial documentation index. Additional documentation and
 tooling directories can be added as implemented behavior needs them.

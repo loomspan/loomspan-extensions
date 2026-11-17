@@ -78,8 +78,9 @@ confidence enforcement, answers extraction or native usage/attempt accounting.
 Success bodies have no diagnostic/error byte ceiling. Large integer/decimal values
 are decoded as BigInteger/BigDecimal. Empty, malformed or trailing-token success
 bodies fail after one send. JSON null is valid and distinct from an empty body.
-An eventual executor must choose a Java return representation that preserves JSON
-null/strings across Framework's ordinary Java result conversion.
+The pack executor serializes the complete decoded value to JSON text before
+returning through Framework's ordinary Java String passthrough, preserving JSON
+null and strings without changing Framework conversion semantics.
 
 Request/response/caught failure/retry evidence uses invocation-scoped info/warn
 diagnostics with supported ordinary JSON values. New diagnostic preparation and

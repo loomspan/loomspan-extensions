@@ -1,0 +1,19 @@
+name: assess
+description: Assess the provider probability as application-owned state
+executor: typesafe
+input_schema:
+  type: object
+  properties:
+    probability: {type: number}
+  required: [probability]
+  additionalProperties: false
+config:
+  request:
+    model: jev-latest
+    state: null
+    questions:
+      followup:
+        type: noul
+        instructions: Given the repeat probability, does a human follow-up seem useful?
+  bindings:
+    /state: ""

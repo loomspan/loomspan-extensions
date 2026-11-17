@@ -1,0 +1,23 @@
+name: parent
+description: Compose native results with explicit application bindings
+model: local
+planning_mode: true
+max_steps: 2
+input_schema:
+  type: object
+  properties:
+    ticket: {type: object, additionalProperties: true}
+  required: [ticket]
+  additionalProperties: false
+allowed_skills:
+  - name: triage
+    required: true
+    max_tasks: 1
+    input_bindings:
+      /ticket: {from: input, path: /ticket}
+  - name: assess
+    required: true
+    max_tasks: 1
+    input_bindings:
+      /probability: {from: child_result, skill: triage, path: /answers/repeat/noul}
+output_from: {skill: assess}

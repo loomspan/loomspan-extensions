@@ -20,6 +20,7 @@ class DecisionsAutoConfigurationTest {
         var captured=new java.util.concurrent.atomic.AtomicReference<TypeSafeTransport>();
         new ApplicationContextRunner().withConfiguration(AutoConfigurations.of(DecisionsAutoConfiguration.class)).run(context -> {
             assertThat(context).hasSingleBean(TypeSafeTransport.class);
+            assertThat(context).hasBean("typeSafeExecutor");
             var transport=context.getBean(TypeSafeTransport.class);
             assertThat(context.getBean(TypeSafeTransport.class)).isSameAs(transport); captured.set(transport);
         });
@@ -34,7 +35,7 @@ class DecisionsAutoConfigurationTest {
                 String source=Files.readString(path);
                 assertThat(source).doesNotContain("ai.loomspan.internal", "ai.loomspan.autoconfigure", "ConditionalOnMissingBean", "SkillReloader");
                 for(String line:source.lines().filter(s->s.startsWith("import ai.loomspan.")&&!s.startsWith("import ai.loomspan.decisions.")).toList())
-                    assertThat(line).isIn("import ai.loomspan.api.extensions.v1.SkillExecutorInvocation;","import ai.loomspan.api.extensions.v1.ExecutorDiagnostics;");
+                    assertThat(line).isIn("import ai.loomspan.api.SkillExecutor;", "import ai.loomspan.api.extensions.v1.SkillExecutorInvocation;","import ai.loomspan.api.extensions.v1.ExecutorDiagnostics;");
             }
         }
     }
