@@ -13,7 +13,6 @@ final class TransportTestSupport {
             Duration.ofSeconds(1), Duration.ofSeconds(1), Duration.ofMillis(15), Duration.ofMillis(25), Duration.ofMillis(100));
     static SkillExecutorInvocation invocation(MockWebServer server) {
         var invocation = mock(SkillExecutorInvocation.class);
-        when(invocation.skillConfig()).thenReturn(Map.of());
         when(invocation.executorConfig()).thenReturn(Map.of("api_key", "fixture-key", "base_url", server.url("/").toString()));
         when(invocation.remainingTime()).thenReturn(Optional.empty());
         when(invocation.diagnostics()).thenReturn(mock(ExecutorDiagnostics.class));

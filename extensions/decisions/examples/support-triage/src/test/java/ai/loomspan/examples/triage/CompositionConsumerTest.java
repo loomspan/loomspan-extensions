@@ -31,8 +31,15 @@ class CompositionConsumerTest {
                 if (answer.equals(TriageApplication.ILLUSTRATIVE)) {
                     String complete = "{\"answers\":{\"followup\":{\"noul\":0.7}},\"usage\":{\"input_tokens\":7},\"unknown\":true}";
                     h.response(complete);
-                    assertThat(h.skills.invoke("parent", Map.of("ticket", Map.of("message", "Damaged twice")), h.views::add)).isEqualTo(complete);
-                    h.take(); assertThat(JSON.readTree(h.take().getBody().readUtf8()).at("/state/probability").asDouble()).isEqualTo(0.9);
+                    var ticket = Map.<String,Object>of("message", "Damaged twice");
+                    assertThat(h.skills.invoke("parent", Map.of("ticket", ticket), h.views::add)).isEqualTo(complete);
+                    var triage = TypeSafeConsumerTest.expectedTriageRequest(ticket);
+                    assertThat(JSON.readTree(h.take().getBody().readUtf8())).isEqualTo(JSON.readTree(JSON.writeValueAsString(triage)));
+                    var assess = JSON.readTree(h.take().getBody().readUtf8());
+                    assertThat(assess).isEqualTo(JSON.readTree("""
+                            {"model":"jev-latest","state":{"probability":0.9},
+                             "questions":{"followup":{"type":"noul","instructions":"Given the repeat probability, does a human follow-up seem useful?"}}}
+                            """));
                     assertThat(h.provider.getRequestCount()).isEqualTo(before + 2);
                 } else {
                     assertThatThrownBy(() -> h.skills.invoke("parent", Map.of("ticket", Map.of("message", "Damaged")), h.views::add)).isInstanceOf(SkillException.class);

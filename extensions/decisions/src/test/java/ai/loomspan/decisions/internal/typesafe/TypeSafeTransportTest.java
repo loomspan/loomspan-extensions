@@ -20,7 +20,7 @@ class TypeSafeTransportTest {
         try (var server = new MockWebServer(); var transport = new TypeSafeTransport(FAST)) {
             server.enqueue(new MockResponse().setBody(new String(fixture("complete-response.json"), StandardCharsets.UTF_8)));
             var invocation = invocation(server);
-            when(invocation.skillConfig()).thenReturn(Map.of("api_key", " leading internal key", "base_url", server.url("/api/prefix/").toString()));
+            when(invocation.executorConfig()).thenReturn(Map.of("api_key", " leading internal key", "base_url", server.url("/api/prefix/").toString()));
             byte[] body = fixture(fixtureName);
             var result = (Map<String,Object>) transport.send(body, invocation);
             var request = server.takeRequest(1, TimeUnit.SECONDS);
@@ -202,8 +202,8 @@ class TypeSafeTransportTest {
             };
             first.setDispatcher(dispatcher); second.setDispatcher(dispatcher);
             var a = invocation(first); var b = invocation(second);
-            when(a.skillConfig()).thenReturn(Map.of("api_key","key-a","base_url",first.url("/a").toString()));
-            when(b.skillConfig()).thenReturn(Map.of("api_key","key-b","base_url",second.url("/b").toString()));
+            when(a.executorConfig()).thenReturn(Map.of("api_key","key-a","base_url",first.url("/a").toString()));
+            when(b.executorConfig()).thenReturn(Map.of("api_key","key-b","base_url",second.url("/b").toString()));
             var fa=workers.submit(() -> transport.send(new byte[]{65},a)); var fb=workers.submit(() -> transport.send(new byte[]{66},b));
             try { assertThat(entered.await(2,TimeUnit.SECONDS)).isTrue(); } finally { release.countDown(); }
             fa.get(3,TimeUnit.SECONDS); fb.get(3,TimeUnit.SECONDS);

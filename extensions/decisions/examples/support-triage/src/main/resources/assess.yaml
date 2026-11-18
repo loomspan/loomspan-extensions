@@ -7,13 +7,16 @@ input_schema:
     probability: {type: number}
   required: [probability]
   additionalProperties: false
-config:
-  request:
-    model: jev-latest
-    state: null
-    questions:
-      followup:
-        type: noul
-        instructions: Given the repeat probability, does a human follow-up seem useful?
-  bindings:
-    /state: ""
+input_transform:
+  language: jslt
+  expression: |
+    {
+      "model": "jev-latest",
+      "state": .,
+      "questions": {
+        "followup": {
+          "type": "noul",
+          "instructions": "Given the repeat probability, does a human follow-up seem useful?"
+        }
+      }
+    }

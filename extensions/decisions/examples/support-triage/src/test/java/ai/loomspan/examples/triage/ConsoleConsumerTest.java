@@ -37,7 +37,7 @@ class ConsoleConsumerTest {
             assertThatThrownBy(() -> h.invoke(Map.of())).hasStackTraceContaining("HTTP 401");
             inspect(console, h, 0, "FAILED");
             // One standard native parent, two Framework calls, pack retry+success: actual mixed-mission projection.
-            h.publish(List.of(leaf("decision", Map.of("request", nativeRequest("mixed", "noul"))),
+            h.publish(List.of(transformedLeaf("decision", JSON.writeValueAsString(nativeRequest("mixed", "noul"))),
                     new SkillDocument("parent", "name: parent\ndescription: Native parent\nmodel: local\nallowed_skills: [{name: decision}]\n")), h.settings());
             h.planner.enqueue(AccountingConsumerTest.nativeResponse(List.of(AccountingConsumerTest.functionCall()), false));
             h.planner.enqueue(AccountingConsumerTest.nativeResponse(List.of(AccountingConsumerTest.textItem("DONE")), false));

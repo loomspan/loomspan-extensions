@@ -17,7 +17,7 @@ Primary documentation refreshed **2026-11-16** without inference or account acce
 The transport preserves prepared text/JSON requests containing Choice, Noul and
 Score together, and returns complete JSON without schema enforcement, answer
 extraction or usage accounting. The executor selects an explicitly authored model
-and binds native request data as documented in [executor configuration](executor.md).
+and passes native request data as documented in [executor configuration](executor.md).
 It does not discover providers or use OpenRouter's separate Decisions endpoint.
 Images/Box are rejected before send. Invocation-time validation supports the native
 text/JSON forms, Choice 1–255 options and Score 1–10 ordered levels. The HTTP schema

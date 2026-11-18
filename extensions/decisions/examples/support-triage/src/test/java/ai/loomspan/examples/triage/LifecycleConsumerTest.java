@@ -21,7 +21,7 @@ class LifecycleConsumerTest {
         assertThat(condition.getAsBoolean()).isTrue();
     }
     static void probe(ConsumerHarness h) {
-        h.publish(List.of(new SkillDocument("decision", leaf("decision", Map.of("request", nativeRequest("state", "noul"))).yaml()
+        h.publish(List.of(new SkillDocument("decision", transformedLeaf("decision", JSON.writeValueAsString(nativeRequest("state", "noul"))).yaml()
                 .replace("executor: typesafe", "executor: probe"))), h.settings());
     }
     static Thread caller(ConsumerHarness h, AtomicReference<Throwable> failure) {
@@ -89,7 +89,7 @@ class LifecycleConsumerTest {
     }
     @Test void progressingBodyIsCappedByAlreadySpentParentExecutionBudget() throws Exception {
         try (var h = new ConsumerHarness("loomspan.session.mission-timeout=1800ms")) {
-            var leaf = new SkillDocument("decision", leaf("decision", Map.of("request", nativeRequest("state", "noul"))).yaml().replace("executor: typesafe", "executor: probe"));
+            var leaf = new SkillDocument("decision", transformedLeaf("decision", JSON.writeValueAsString(nativeRequest("state", "noul"))).yaml().replace("executor: typesafe", "executor: probe"));
             h.publish(List.of(leaf, new SkillDocument("parent", "name: parent\ndescription: Parent\nmodel: local\nallowed_skills: [{name: decision}]\n")), h.settings());
             h.planner.enqueue(AccountingConsumerTest.nativeResponse(List.of(AccountingConsumerTest.functionCall()), false).setBodyDelay(650, TimeUnit.MILLISECONDS));
             h.response("{\"slow\":\"" + "x".repeat(200) + "\"}");
@@ -114,7 +114,7 @@ class LifecycleConsumerTest {
                 var failure = new AtomicReference<Throwable>(); Thread caller = caller(h, failure);
                 try {
                     caller.start(); assertThat(h.probe.returned.await(5, TimeUnit.SECONDS)).isTrue();
-                    h.publish(Map.of("request", nativeRequest("new", "noul")));
+                    h.publish(List.of(transformedLeaf("decision", JSON.writeValueAsString(nativeRequest("new", "noul")))), h.settings());
                     caller.join(5000); assertThat(caller.isAlive()).isFalse(); assertThat(failure.get()).isNotNull();
                     assertThat(h.probe.stopped.getCount()).isOne(); assertThat(retired).doesNotContain(generation);
                     assertThat(h.probe.call.remainingTime()).contains(Duration.ZERO);

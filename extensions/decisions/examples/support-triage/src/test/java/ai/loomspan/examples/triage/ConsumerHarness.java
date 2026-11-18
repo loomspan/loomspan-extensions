@@ -65,10 +65,15 @@ final class ConsumerHarness implements AutoCloseable {
                 + "  session: " + JSON.writeValueAsString(session) + "\n";
         try (var update = reloader.prepare("default", documents, new ExecutionConfiguration(configuration), Map.of("planner-key", "planner-test-key"))) { reloader.publish(update); }
     }
-    void publish(Map<String,Object> config) { publish(List.of(leaf("decision", config)), settings()); }
+    void publishNative() { publish(List.of(nativeLeaf("decision")), settings()); }
     Map<String,Object> settings() { return Map.of("api_key", "namespace-test-key", "base_url", provider.url("/prefix").toString()); }
-    static SkillDocument leaf(String name, Map<String,Object> config) {
-        return new SkillDocument(name + ".yaml", "name: " + name + "\ndescription: Native request\nexecutor: typesafe\nconfig: " + JSON.writeValueAsString(config) + "\n");
+    static SkillDocument nativeLeaf(String name) {
+        return new SkillDocument(name + ".yaml", "name: " + name + "\ndescription: Native request\nexecutor: typesafe\n");
+    }
+    static SkillDocument transformedLeaf(String name, String expression) {
+        var leaf = nativeLeaf(name);
+        return new SkillDocument(leaf.sourceName(), leaf.yaml() + "input_transform:\n  language: jslt\n  expression: "
+                + JSON.writeValueAsString(expression) + "\n");
     }
     static Map<String,Object> nativeRequest(Object state, String type) {
         var question = new LinkedHashMap<String,Object>(); question.put("type", type); question.put("instructions", "Judge the supplied state");

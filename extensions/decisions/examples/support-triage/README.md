@@ -4,11 +4,12 @@ A runnable application consuming the installed
 `ai.loomspan:loomspan-decisions:0.1.0-SNAPSHOT` JAR. The independent [POM](pom.xml)
 uses Java 21, Boot 4.2.0-RC2 and Framework
 `ai.loomspan:loomspan-spring-boot-starter:1.0.0-beta.10-SNAPSHOT` transitively.
-Tested native-free Framework source: `fa1ca190d393b63314846e604a6bbd8157ed8eab`; the
-[pack version table](../../README.md) lists exact library/tool versions.
+The [pack version table](../../README.md) lists exact library/tool versions.
 These are unpublished local snapshots, not released artifacts.
 
-Keep Framework beside Extensions. Install Framework first from its root:
+Keep Framework beside Extensions. Follow the
+[pack prerequisites](../../README.md#local-build) to install pinned JSLT, then
+install Framework from its root.
 
 ```powershell
 ./mvnw.cmd -DskipTests install
@@ -48,7 +49,8 @@ Default input:
 {"ticket":{"message":"Parcel arrived damaged and is unusable","contacts":2}}
 ```
 
-The app owns Choice team criteria, Noul repeat instructions, Score impact levels,
+The triage JSLT expression builds the request from the ticket and its authored model,
+Choice team criteria, Noul repeat instructions and Score impact levels. The app owns the
 input schema, `rbac_roles: [SUPPORT_TRIAGE]` and action policy. The demo installs a
 local caller with `ROLE_SUPPORT_TRIAGE`; real hosts authenticate callers and grant
 roles themselves. Consumer tests check unauthorized rejection. HTTP/retry logic
@@ -85,7 +87,8 @@ automatic assigned dispatch. Missing/type-invalid native result sources fail
 ordinary runtime binding checks before assess sends.
 
 The parent model alias `local` is a Framework connection, distinct from the
-TypeSafe leaf's native `config.request.model`. The harness publishes native parent
+TypeSafe leaf's native `model` in its transform. The assess transform uses the
+bound probability as part of its native state. The harness publishes native parent
 configuration with `api-key-ref` and its supplied credential map; that facility
 does not resolve pack executor maps. Real parent use needs an authorized Framework
 model connection. Keep business policy and criteria application-owned.
@@ -94,17 +97,16 @@ model connection. Keep business policy and criteria application-owned.
 
 See [executor configuration](../../docs/executor.md) for exact syntax. Native
 Choice/Noul/Score work separately or mixed with text/JSON state, instructions and
-criteria. Images/assets and Box fail before send. Validation runs each invocation;
-publication success does not certify provider configuration. Bindings preserve
-present null and omit missing object fields; score order remains authored.
+criteria. Images/assets and Box fail before send. On each invocation,
+the pack checks settings and native input before sending. The consumer suite proves
+that the triage transform and equivalent direct native input send the same request.
 Executor leaves have no generated output metadata or `output_schema`; generic
 runtime binding checks remain. Use `/answers/...`, not answers-only paths.
 
 Complete native results preserve unknown fields, refusals, usage, JSON null/string
 and other values. Malformed/empty successful HTTP fails without decoding-only retry.
-Diagnostic limits never truncate business results. YAML executor-config decimals
-may already have rounded; the pack preserves received values and adds no precision
-mode or extra rounding. Redirects are never followed.
+Diagnostic limits apply to trace content. The pack preserves the complete result
+and received JSON numbers. Redirect responses fail without following the location.
 
 The demo prints a trace session ID. Its retained canonical
 `<session>.<trace>.execution-trace.ndjson` is under the JVM temporary directory.
@@ -136,9 +138,8 @@ exact pinned toolchain (Go 1.26.5, Node 24.18.0, npm 12.0.2):
 go run ./internal/buildtool build
 ```
 
-From Extensions root, the required explicit profile runs the ordinary suite and
-real Console/browser/MCP qualification; this Windows command assumes the sibling
-checkout layout used above:
+The optional profile runs the ordinary suite and real Console browser/MCP
+checks from the Extensions root. This Windows command uses the sibling checkout.
 
 ```powershell
 mvn -B -f extensions/decisions/examples/support-triage/pom.xml -Pconsole "-Dloomspan.console.executable=$((Resolve-Path ../loomspan-framework/loomspan-console/build/loomspan-console.exe).Path)" verify
@@ -168,8 +169,9 @@ If import fails, check the exact matching Console version and that the trace is 
 never edit its marker. If capture is unavailable, inspect the recorded notice/state;
 discarded evidence is not recoverable and absence does not establish a cause.
 
-- `skillConfig...`/`executorConfig...` errors indicate local validation. Check map
-  presence, model/native shape and pointers; no stub request should have arrived.
+- `input.*` errors identify invalid native request fields. `executorConfig.*` errors
+  identify invalid namespace settings. `skillConfig.*` errors identify leaf keys
+  that must be removed. These checks run before sending.
 - HTTP/IO failures record caught failure/retry evidence, with at most three identical
   bodies. HTML/malformed errors do not remove HTTP retry eligibility.
 - Missing native fields or unconventional confidence values are application data;

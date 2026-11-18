@@ -11,35 +11,19 @@ import tools.jackson.databind.json.JsonMapper;
 /** Native request construction, before any transport retry. Not an application API. */
 final class TypeSafeRequest {
     private static final JsonMapper JSON = JsonMapper.builder().build();
-    private static final Object MISSING = new Object();
 
     static byte[] prepare(Map<String, Object> skill, Map<String, Object> executor, Map<String, Object> input) {
-        fields(skill, Set.of("request", "bindings", "api_key", "base_url"), "skillConfig");
+        fields(skill, Set.of(), "skillConfig");
         fields(executor, Set.of("api_key", "base_url"), "executorConfig");
-        var request = object(copy(skill.get("request"), "skillConfig.request", new IdentityHashMap<>(), 0), "skillConfig.request");
-        if (skill.containsKey("bindings")) {
-            var bindings = object(skill.get("bindings"), "skillConfig.bindings");
-            List<List<String>> targets = new ArrayList<>();
-            for (var entry : bindings.entrySet()) {
-                String path = "skillConfig.bindings[" + entry.getKey() + "]";
-                var target = pointer(entry.getKey(), path);
-                require(!target.isEmpty(), path, "request root replacement is unsupported");
-                for (var prior : targets)
-                    require(!prefix(target, prior) && !prefix(prior, target), path, "overlapping target pointers");
-                targets.add(target);
-                require(entry.getValue() instanceof String, path, "source must be a JSON Pointer string");
-                Object value = lookup(input, pointer((String) entry.getValue(), path));
-                bind(request, target, value == MISSING ? MISSING : copy(value, path, new IdentityHashMap<>(), 0), path);
-            }
-        }
+        var request = object(copy(input, "input", new IdentityHashMap<>(), 0), "input");
         validate(request);
         byte[] result = JSON.writeValueAsBytes(request);
-        require(result.length <= 32 * 1024 * 1024, "skillConfig.request", "exceeds 32 MiB JSON body");
+        require(result.length <= 32 * 1024 * 1024, "input", "exceeds 32 MiB JSON body");
         return result;
     }
 
     private static void validate(Map<String, Object> request) {
-        String root = "skillConfig.request";
+        String root = "input";
         fields(request, Set.of("model", "state", "questions"), root);
         require(request.get("model") instanceof String model && !model.isBlank(), root + ".model", "must be nonblank text");
         require(request.containsKey("state"), root + ".state", "is required");
@@ -123,52 +107,6 @@ final class TypeSafeRequest {
             }
             throw new IllegalArgumentException(path + ": unsupported JSON value " + value.getClass().getName());
         } finally { parents.remove(value); }
-    }
-
-    private static List<String> pointer(String value, String path) {
-        if (value.isEmpty()) return List.of();
-        require(value.startsWith("/"), path, "must be an RFC 6901 JSON Pointer");
-        var result = new ArrayList<String>();
-        for (String part : value.substring(1).split("/", -1)) {
-            for (int i = 0; i < part.length(); i++) if (part.charAt(i) == '~') {
-                require(i + 1 < part.length() && (part.charAt(i + 1) == '0' || part.charAt(i + 1) == '1'), path, "invalid JSON Pointer escape");
-                i++;
-            }
-            result.add(part.replace("~1", "/").replace("~0", "~"));
-        }
-        return result;
-    }
-
-    private static boolean prefix(List<String> first, List<String> second) {
-        return first.size() <= second.size() && second.subList(0, first.size()).equals(first);
-    }
-
-    private static Object lookup(Object current, List<String> parts) {
-        for (String part : parts) {
-            if (current instanceof Map<?, ?> map) current = map.containsKey(part) ? map.get(part) : MISSING;
-            else if (current instanceof List<?> list && part.matches("0|[1-9][0-9]*")) {
-                try { int index = Integer.parseInt(part); current = index < list.size() ? list.get(index) : MISSING; }
-                catch (NumberFormatException ex) { return MISSING; }
-            } else return MISSING;
-        }
-        return current;
-    }
-
-    @SuppressWarnings("unchecked")
-    private static void bind(Map<String, Object> request, List<String> parts, Object value, String path) {
-        Object parent = lookup(request, parts.subList(0, parts.size() - 1));
-        String key = parts.getLast();
-        if (parent instanceof Map<?, ?> map) {
-            var target = (Map<String, Object>) map;
-            if (value == MISSING) target.remove(key); else target.put(key, value);
-        } else if (parent instanceof List<?> list) {
-            require(value != MISSING, path, "cannot omit array element");
-            require(key.matches("0|[1-9][0-9]*"), path, "invalid array index");
-            int index;
-            try { index = Integer.parseInt(key); } catch (NumberFormatException ex) { throw new IllegalArgumentException(path + ": invalid array index"); }
-            require(index < list.size(), path, "array index out of range");
-            ((List<Object>) list).set(index, value);
-        } else throw new IllegalArgumentException(path + ": target parent is missing or scalar");
     }
 
     @SuppressWarnings("unchecked")

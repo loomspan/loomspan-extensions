@@ -9,19 +9,17 @@ invocation thread; the watchdog does no I/O. There are no background I/O workers
 
 ## Captured settings
 
-The transport reads the invocation's captured skill/executor maps once per send.
-Only these two keys use the following presence-based precedence:
+The transport captures the invocation's executor namespace settings once per send.
 
-| Setting | First | When absent | Absent from both |
-| --- | --- | --- | --- |
-| `api_key` | `skillConfig.api_key` | `executorConfig.api_key` | Fail before send |
-| `base_url` | `skillConfig.base_url` | `executorConfig.base_url` | `https://api.typesafe.ai` |
+| Setting | When absent |
+| --- | --- |
+| `executorConfig.api_key` | Fail before send |
+| `executorConfig.base_url` | Default to `https://api.typesafe.ai` |
 
-Present null, blank or non-string values fail at the selected path without falling
-back. Keys retain their exact valid ASCII HTTP-header value; controls/non-ASCII
-header characters fail rather than being repaired. Spaces in nonblank credentials
-are not trimmed. Applications supply resolved values: no environment lookup,
-`${...}` interpolation, `api-key-ref` or native connection lookup occurs.
+Present null, blank or non-string values fail at the corresponding path. Valid
+nonblank ASCII HTTP-header credential values retain their spaces and characters.
+Controls and non-ASCII header characters fail validation. Applications supply
+resolved values directly in the executor map.
 
 Base URLs must be absolute HTTP(S) URLs with a host, valid optional port and optional
 path, without userinfo, query, fragment or surrounding whitespace. Trailing slash
@@ -29,8 +27,8 @@ separators are removed before appending `/v1/systemone`; encoded prefixes remain
 intact. For example `https://proxy.example/api/` targets
 `https://proxy.example/api/v1/systemone`. Each request is POST JSON with
 `Authorization: Bearer <exact selected key>`. Separate invocations can use different
-keys/endpoints concurrently on the same pool. Publishing each configuration owner
-uses Framework's existing capture/retention semantics; retries retain selected values.
+keys and endpoints concurrently on the same pool. Namespace publication retains
+captured settings for ongoing work and its retries.
 
 ## Deadlines and retries
 

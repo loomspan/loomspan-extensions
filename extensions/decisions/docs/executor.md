@@ -10,7 +10,7 @@ and autoconfigure packages are construction machinery, not supported extension A
 Applications declare ordinary `executor: typesafe` YAML leaves in `default` and
 invoke their names through `SkillTemplate`. Existing namespace visibility,
 configuration ownership, publication and authorization rules still apply. The
-executor selects `loomspan.executor-config.default.typesafe`; supply this map even
+executor receives `loomspan.executor-config.default.typesafe`; supply this map even
 if empty. Use a YAML Config Data source or public namespace publication for these
 raw maps, not flattened Spring property names that change arbitrary map keys.
 
@@ -27,25 +27,27 @@ loomspan:
 name: repeatContact
 description: Judge whether this is a repeat contact
 executor: typesafe
-config:
-  request:
-    model: jev-latest
-    state: null
-    questions:
-      repeat:
-        type: noul
-        instructions: Has this customer contacted support more than once?
-  bindings:
-    /state: /ticket
+input_schema:
+  type: object
+  properties:
+    ticket: {type: string}
+  required: [ticket]
+  additionalProperties: false
+input_transform:
+  language: jslt
+  expression: |
+    {"model": "jev-latest", "state": .ticket,
+     "questions": {"repeat": {"type": "noul",
+                             "instructions": "Has this customer contacted support more than once?"}}}
 ```
 
-`config` accepts `request`, optional `bindings`, and optional `api_key`/`base_url`.
-Executor namespace config accepts `api_key`/`base_url`. A present skill setting
-wins over the namespace setting. Present null, blank, non-string credentials/URLs
-and malformed URLs fail before send, without falling back. If both maps omit the
-key, credentials fail and the base URL defaults to `https://api.typesafe.ai`.
-Valid credential content is preserved. Prefixes remain when `/v1/systemone` is
-appended. See [transport](transport.md) for header/URL constraints and fixed limits.
+Use an omitted or empty `config` map. The pack rejects every leaf configuration
+key at invocation. The captured executor namespace map accepts two keys,
+required `api_key` and optional `base_url`. Present null, blank or non-string settings and
+malformed URLs fail before sending. An absent `base_url` defaults to
+`https://api.typesafe.ai`. Valid credentials are used verbatim. A configured path
+prefix stays in place when `/v1/systemone` is appended. See [transport](transport.md)
+for header and URL constraints.
 
 Applications supply **resolved values** in these maps, for example using
 `SkillReloader.prepare` with an `ExecutionConfiguration` containing a JSON-encoded
@@ -54,12 +56,16 @@ The pack has no environment fallback, `${...}` interpolation, `api-key-ref`
 resolution or native model/connection lookup. Framework's native connection
 credential map is a different facility and does not resolve executor map values.
 
-## Native requests and binding
+## Native requests
 
-`request` is a native object containing exactly `model`, `state`, `questions`.
-`model` is explicit nonblank text, not a Framework alias. State is text, object or
-array. Question names stay unchanged. Question objects contain `type`, optional
-`instructions` and `criteria`, in the [provider's native forms](provider-contract.md).
+A leaf with `input_transform` receives ordinary business input. Framework
+validates the declared input schema before applying JSLT and hands the resulting
+object to the pack. For direct native input, omit `input_transform` and pass the
+complete native request as ordinary input. Both routes supply exactly `model`,
+`state` and `questions` through `SkillExecutorInvocation.input()`. `model` is a
+nonblank provider model ID. State is text, an object or an array. Question names
+stay unchanged. Question objects contain `type`, optional `instructions` and
+`criteria`, in the [provider's native forms](provider-contract.md).
 
 | Type | Criteria |
 | --- | --- |
@@ -74,32 +80,18 @@ fields fail before send. Mixed question types use one request; there is no split
 discovery or fallback. Provider/model availability requires an appropriate account
 and route; deterministic tests establish integration rather than quality or access.
 
-`bindings` maps request-target JSON Pointers to input-source JSON Pointers.
-`""` selects the whole input only on the source side. Escape `/` as `~1` and `~` as
-`~0`. Targets require existing parents; an object leaf can be added or replaced,
-and existing array elements can be replaced. Array indices use canonical unsigned
-decimal notation. Malformed pointers, scalar/missing target parents, invalid array
-indices and ancestor/descendant target overlaps fail with the configuration path.
-There is no interpolation or legacy expression syntax.
+Native input and structured descriptions preserve present nulls and finite
+numbers, including BigDecimal and BigInteger values. The pack copies, validates
+and serializes the complete request once per invocation. Retries reuse those
+bytes. Cycles, unsupported Java values, nonfinite numbers, nesting above 128
+and serialized requests above 32 MiB fail locally.
 
-A present input null is preserved. A missing source removes its target object
-property. Missing-source array omission fails rather than shifting ordered values;
-removing a required native field fails resolved validation. Captured maps and inputs
-are not mutated. Build, validate and serialize once, then reuse identical retry bytes.
-
-Finite JSON numbers are preserved as received. Framework's ordinary executor-config
-YAML decoding can already round precise decimal literals; the pack cannot recover
-those digits and adds no rounding, string conversion or precision mode. Input values
-such as BigDecimal/BigInteger and native response numbers retain their received values.
-Cycles, unsupported Java values, non-finite numbers, nesting above 128 and serialized
-requests above 32 MiB fail locally. These are resource/representation limits.
-
-Local Spring `ByteArrayResource`, `ClassPathResource`, `FileSystemResource` and
-`PathResource` content may be supplied in request values, including through bindings.
-Content becomes UTF-8 text during construction and is not reread on retries; it is
-not implicitly parsed as JSON. Other Resource types fail before opening. A plain
-URL string stays text and is never fetched by the pack. PathResource is supported
-by this tested Spring version but deprecated there; prefer FileSystemResource.
+On the direct route, a value can contain a local Spring `ByteArrayResource`,
+`ClassPathResource`, `FileSystemResource` or `PathResource`. The pack reads
+content as UTF-8 text during request preparation. Other Resource types fail
+before opening. Ordinary URL strings stay text. Choose `FileSystemResource`
+for files because this Spring version deprecates `PathResource`. A leaf
+that uses JSLT accepts only JSON values through Framework's transform.
 
 ## Results, evidence and lifecycle
 

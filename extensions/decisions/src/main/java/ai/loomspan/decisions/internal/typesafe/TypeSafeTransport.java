@@ -69,7 +69,7 @@ public final class TypeSafeTransport implements AutoCloseable {
     public Object send(byte[] preparedJson, SkillExecutorInvocation invocation) {
         Objects.requireNonNull(invocation, "invocation");
         checkLive(invocation);
-        TypeSafeSettings settings = TypeSafeSettings.capture(invocation.skillConfig(), invocation.executorConfig());
+        TypeSafeSettings settings = TypeSafeSettings.capture(invocation.executorConfig());
         byte[] body = Objects.requireNonNull(preparedJson, "preparedJson").clone();
         for (int attempt = 1; attempt <= 3; attempt++) {
             checkLive(invocation);

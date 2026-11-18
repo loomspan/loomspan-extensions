@@ -30,7 +30,7 @@ class AccountingConsumerTest {
     @Test void mixedMissionAtExactNativeAttemptQuotaPreservesProviderUsageWithoutCountingIt() throws Exception {
         for (boolean unavailable : List.of(false, true)) {
             try (var h = new ConsumerHarness("loomspan.session.quotas.max-provider-attempts=2")) {
-                h.publish(List.of(leaf("decision", Map.of("request", nativeRequest("text", "noul"))),
+                h.publish(List.of(transformedLeaf("decision", JSON.writeValueAsString(nativeRequest("text", "noul"))),
                         new SkillDocument("parent", "name: parent\ndescription: Native parent\nmodel: local\nallowed_skills: [{name: decision}]\n")), h.settings());
                 h.planner.enqueue(nativeResponse(List.of(functionCall()), unavailable));
                 h.planner.enqueue(nativeResponse(List.of(textItem("DONE")), false));
@@ -54,13 +54,13 @@ class AccountingConsumerTest {
     }
     @Test void executorOnlyMissingProviderUsageAndDecodeFailureKeepFrameworkTotalsZero() throws Exception {
         try (var h = new ConsumerHarness("loomspan.session.quotas.max-provider-attempts=1")) {
-            h.publish(Map.of("request", nativeRequest("text", "noul")));
-            h.response("{\"answers\":{}}"); assertThat(JSON.readTree(h.invoke(Map.of())).has("usage")).isFalse();
+            h.publishNative();
+            h.response("{\"answers\":{}}"); assertThat(JSON.readTree(h.invoke(nativeRequest("text", "noul"))).has("usage")).isFalse();
             assertThat(usage(h).path("providerAttempts").asInt()).isZero(); assertThat(usage(h).path("totalUnits").asInt()).isZero();
             var response = h.trace().stream().filter(r -> r.path("recordType").asText().equals("EXECUTOR_DIAGNOSTIC_RECORDED")
                     && r.path("data").path("message").asText().equals("TypeSafe response")).findFirst().orElseThrow();
             assertThat(response.at("/data/data/response").has("usage")).isFalse();
-            h.response("not JSON 雪"); assertThatThrownBy(() -> h.invoke(Map.of())).hasStackTraceContaining("StreamReadException");
+            h.response("not JSON 雪"); assertThatThrownBy(() -> h.invoke(nativeRequest("text", "noul"))).hasStackTraceContaining("StreamReadException");
             assertThat(h.provider.getRequestCount()).isEqualTo(2);
             assertThat(usage(h).path("providerAttempts").asInt()).isZero(); assertThat(usage(h).path("totalUnits").asInt()).isZero();
             assertThat(h.trace()).noneMatch(r -> r.path("recordType").asText().equals("MODEL_REQUEST_SENT"));

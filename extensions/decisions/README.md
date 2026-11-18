@@ -13,14 +13,14 @@ The root POM only aggregates local builds; this artifact owns its version.
 
 ## Documentation
 
-- [Executor configuration and binding](docs/executor.md).
+- [Native input and executor configuration](docs/executor.md).
 - [Runnable support-triage recipe](examples/support-triage/README.md).
 - [Transport settings and behavior](docs/transport.md): credentials, endpoint
   prefixes, fixed limits, retries, lifecycle, diagnostics and result semantics.
 - [Provider contract and sources](docs/provider-contract.md): dated TypeSafe/model/
   route evidence and synthetic fixtures.
-- [Tested builds and verification](docs/tested-builds.md): final native-free build
-  identities, advanced consumer/Console commands and evidence boundaries.
+- [Tested builds and verification](docs/tested-builds.md): installed build
+  prerequisites, consumer checks and optional Console commands.
 - [Changelog](CHANGELOG.md).
 
 ## Tested local combination
@@ -28,8 +28,7 @@ The root POM only aggregates local builds; this artifact owns its version.
 | Component | Version |
 | --- | --- |
 | Java | 21.0.2, JetBrains runtime |
-| Framework | `ai.loomspan:loomspan-spring-boot-starter:1.0.0-beta.10-SNAPSHOT`, native-free source `fa1ca190d393b63314846e604a6bbd8157ed8eab` |
-| Console | `1.0.0-beta.10-SNAPSHOT`, same Framework source; Go 1.26.5, Node 24.18.0, npm 12.0.2 |
+| Framework | `ai.loomspan:loomspan-spring-boot-starter:1.0.0-beta.10-SNAPSHOT` |
 | Extension contract | `ai.loomspan.api.extensions.v1.SkillExecutorInvocation` and `ExecutorDiagnostics` |
 | Spring Boot | 4.2.0-RC2 |
 | Apache HttpClient | 5.6.5 |
@@ -37,15 +36,15 @@ The root POM only aggregates local builds; this artifact owns its version.
 | Tests | JUnit Jupiter 6.1.3, MockWebServer 4.12.0 |
 | Maven | 3.9.6; Framework wrapper 3.9.11 |
 
-These are tested local snapshots/prereleases, not released compatibility promises.
-Framework's existing configuration numeric decoding applies before pack execution;
-high-precision declaration decimals may already have rounded. The transport
-preserves prepared bytes and received JSON numbers without adding rounding.
+Supply the complete native request as skill input, or use Framework's JSLT
+transform to build it from the leaf's business input. The leaf uses resolved
+connection settings from the captured executor namespace map.
 
 ## Local build
 
-Keep `loomspan-framework` beside this repository. Test the matching Framework
-checkout and install its dependency locally from that checkout:
+Keep `loomspan-framework` beside this repository. Install the pinned JSLT artifact
+as described in the [Framework JSLT build guide](../../../loomspan-framework/docs/building-jslt.md).
+Then test and install Framework from its root.
 
 ```powershell
 ./mvnw.cmd test
@@ -56,17 +55,15 @@ Then from this repository root:
 
 ```powershell
 mvn -B validate
-mvn -B -f extensions/decisions/pom.xml verify
 mvn -B -f extensions/decisions/pom.xml install
 mvn -B -f extensions/decisions/examples/support-triage/pom.xml verify
 mvn -B -f extensions/decisions/pom.xml dependency:tree
 ```
 
-Pack `verify` runs unit, Spring and real local HTTP tests through Surefire. The
+Pack `install` runs unit, Spring and real local HTTP tests through Surefire. The
 separate example `verify` is also required: it exercises the installed JAR through
 normal Boot discovery and supported Framework APIs, including parent composition.
-It
-requires no provider credentials, account access, live inference or Console.
+It requires no provider credentials, account access, live inference or Console.
 Installing the pack does not expose a callable skill. Applications supply
 resolved provider settings; the transport never finds environment credentials or
 native model connections.
