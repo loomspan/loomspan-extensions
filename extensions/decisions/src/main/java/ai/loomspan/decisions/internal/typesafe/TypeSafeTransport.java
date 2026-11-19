@@ -69,9 +69,10 @@ public final class TypeSafeTransport implements AutoCloseable {
     public Object send(byte[] preparedJson, SkillExecutorInvocation invocation) {
         Objects.requireNonNull(invocation, "invocation");
         checkLive(invocation);
+        int maxAttempts = TypeSafeRequest.maxAttempts(invocation.skillConfig());
         TypeSafeSettings settings = TypeSafeSettings.capture(invocation.executorConfig());
         byte[] body = Objects.requireNonNull(preparedJson, "preparedJson").clone();
-        for (int attempt = 1; attempt <= 3; attempt++) {
+        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
             checkLive(invocation);
             int number = attempt;
             diagnostic(invocation, false, "TypeSafe request", () -> Map.of(
@@ -92,13 +93,13 @@ public final class TypeSafeTransport implements AutoCloseable {
                         "attempt", number, "status", failure.status, "body", failure.body,
                         "truncated", failure.truncated, "unavailable", failure.unavailable,
                         "captureLimitBytes", ERROR_LIMIT_BYTES));
-                if (!failure.retryable() || attempt == 3) throw failure;
+                if (!failure.retryable() || attempt == maxAttempts) throw failure;
                 retryWait(invocation, retryDelay(failure.retryAfter, attempt), number);
             } catch (IOException failure) {
                 checkLive(invocation);
                 diagnostic(invocation, true, "TypeSafe transport failure", () -> Map.of(
                         "attempt", number, "message", String.valueOf(failure.getMessage())));
-                if (attempt == 3) throw new IllegalStateException("TypeSafe HTTP execution failed", failure);
+                if (attempt == maxAttempts) throw new IllegalStateException("TypeSafe HTTP execution failed", failure);
                 retryWait(invocation, retryDelay(null, attempt), number);
             }
         }

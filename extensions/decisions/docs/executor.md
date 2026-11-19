@@ -41,8 +41,16 @@ input_transform:
                              "instructions": "Has this customer contacted support more than once?"}}}
 ```
 
-Use an omitted or empty `config` map. The pack rejects every leaf configuration
-key at invocation. The captured executor namespace map accepts two keys,
+The optional leaf setting `config.max_attempts` accepts an integer from 1 to 3.
+It limits physical sends per invocation, including the first request. Omitting it
+allows three attempts. For a skill that should send only once, use:
+
+```yaml
+config:
+  max_attempts: 1
+```
+
+Invalid values and unknown leaf keys fail at invocation before the first send. The captured executor namespace map accepts two keys,
 required `api_key` and optional `base_url`. Present null, blank or non-string settings and
 malformed URLs fail before sending. An absent `base_url` defaults to
 `https://api.typesafe.ai`. Valid credentials are used verbatim. A configured path

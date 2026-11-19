@@ -12,8 +12,19 @@ import tools.jackson.databind.json.JsonMapper;
 final class TypeSafeRequest {
     private static final JsonMapper JSON = JsonMapper.builder().build();
 
-    static byte[] prepare(Map<String, Object> skill, Map<String, Object> executor, Map<String, Object> input) {
-        fields(skill, Set.of(), "skillConfig");
+    static int maxAttempts(Map<String, Object> skill) {
+        fields(skill, Set.of("max_attempts"), "skillConfig");
+        Object value = skill.getOrDefault("max_attempts", 3);
+        String path = "skillConfig.max_attempts";
+        String constraint = "must be an integer from 1 to 3";
+        require(value instanceof Byte || value instanceof Short || value instanceof Integer
+                || value instanceof Long || value instanceof BigInteger, path, constraint);
+        BigInteger count = new BigInteger(value.toString());
+        require(count.signum() > 0 && count.compareTo(BigInteger.valueOf(3)) <= 0, path, constraint);
+        return count.intValueExact();
+    }
+
+    static byte[] prepare(Map<String, Object> executor, Map<String, Object> input) {
         fields(executor, Set.of("api_key", "base_url"), "executorConfig");
         var request = object(copy(input, "input", new IdentityHashMap<>(), 0), "input");
         validate(request);

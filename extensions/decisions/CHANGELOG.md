@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- TypeSafe skill YAML can set `config.max_attempts` to 1, 2, or 3 total sends per invocation. The default is 3.
+
 - Qualified the installed artifact against native-free Framework and same-version
   Console with concurrent publication, live deadlines/cancellation, late physical
   return/resource ownership, diagnostic faults and mixed-mission accounting checks.

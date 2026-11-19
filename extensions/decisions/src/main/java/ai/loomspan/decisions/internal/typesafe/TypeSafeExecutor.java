@@ -13,7 +13,7 @@ public final class TypeSafeExecutor {
 
     @SkillExecutor(name = "typesafe", config = "typesafe")
     public String execute(SkillExecutorInvocation invocation) {
-        byte[] request = TypeSafeRequest.prepare(invocation.skillConfig(), invocation.executorConfig(), invocation.input());
+        byte[] request = TypeSafeRequest.prepare(invocation.executorConfig(), invocation.input());
         return json.writeValueAsString(transport.send(request, invocation));
     }
 }

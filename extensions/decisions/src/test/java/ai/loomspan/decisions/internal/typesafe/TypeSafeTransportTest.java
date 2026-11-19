@@ -55,6 +55,19 @@ class TypeSafeTransportTest {
         }
     }
 
+    @ParameterizedTest @ValueSource(ints = {1, 2, 3})
+    void honorsSkillAttemptLimit(int limit) throws Exception {
+        try (var server = new MockWebServer(); var transport = new TypeSafeTransport(FAST)) {
+            for (int i = 0; i < limit; i++) server.enqueue(new MockResponse().setResponseCode(529));
+            server.enqueue(new MockResponse().setBody("{}"));
+            var invocation = invocation(server);
+            when(invocation.skillConfig()).thenReturn(Map.of("max_attempts", limit));
+            byte[] body = fixture("mixed-text-request.json");
+            assertThatThrownBy(() -> transport.send(body, invocation)).hasMessageContaining("HTTP 529");
+            assertThat(server.getRequestCount()).isEqualTo(limit);
+        }
+    }
+
     @Test void retryCardinalityIsExactlyThree() throws Exception {
         try (var server = new MockWebServer(); var transport = new TypeSafeTransport(FAST)) {
             for (int i=0;i<4;i++) server.enqueue(new MockResponse().setResponseCode(529).setBody("oops"));
@@ -114,13 +127,13 @@ class TypeSafeTransportTest {
 
     @Test void errorCaptureIsBoundedUtf8AndDoesNotDrainRemainder() throws Exception {
         try (var server = new MockWebServer(); var transport = new TypeSafeTransport(FAST)) {
-            server.enqueue(new MockResponse().setResponseCode(401).setBody("€".repeat(100_000))
+            server.enqueue(new MockResponse().setResponseCode(401).setBody("â‚¬".repeat(100_000))
                     .throttleBody(70_000, 1, TimeUnit.SECONDS));
             long started = System.nanoTime();
             TypeSafeHttpFailure failure = catchThrowableOfType(() -> transport.send("{}".getBytes(StandardCharsets.UTF_8), invocation(server)),TypeSafeHttpFailure.class);
             assertThat(failure.truncated).isTrue(); assertThat(failure.unavailable).isFalse();
             assertThat(failure.body.getBytes(StandardCharsets.UTF_8).length).isLessThanOrEqualTo(TypeSafeTransport.ERROR_LIMIT_BYTES);
-            assertThat(failure.body).doesNotContain("�");
+            assertThat(failure.body).doesNotContain("ï¿½");
             assertThat(Duration.ofNanos(System.nanoTime()-started)).isLessThan(Duration.ofSeconds(2));
         }
     }
@@ -131,6 +144,18 @@ class TypeSafeTransportTest {
             server.enqueue(new MockResponse().setBody("{}"));
             assertThat(transport.send("{}".getBytes(StandardCharsets.UTF_8),invocation(server))).isEqualTo(Map.of());
             assertThat(server.getRequestCount()).isEqualTo(2);
+        }
+    }
+
+    @Test void singleAttemptStopsOnSocketDisconnect() throws Exception {
+        try (var server = new MockWebServer(); var transport = new TypeSafeTransport(FAST)) {
+            server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST));
+            server.enqueue(new MockResponse().setBody("{}"));
+            var invocation = invocation(server);
+            when(invocation.skillConfig()).thenReturn(Map.of("max_attempts", 1));
+            assertThatThrownBy(() -> transport.send("{}".getBytes(StandardCharsets.UTF_8), invocation))
+                    .hasCauseInstanceOf(java.io.IOException.class);
+            assertThat(server.getRequestCount()).isOne();
         }
     }
 

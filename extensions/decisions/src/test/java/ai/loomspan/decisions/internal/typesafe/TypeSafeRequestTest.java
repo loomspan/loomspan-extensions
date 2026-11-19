@@ -29,7 +29,7 @@ class TypeSafeRequestTest {
     }
 
     private static JsonNode build(Map<String, Object> input) {
-        return JSON.readTree(TypeSafeRequest.prepare(Map.of(), Map.of(), input));
+        return JSON.readTree(TypeSafeRequest.prepare(Map.of(), input));
     }
 
     @Test void nativeInputIsTheCompleteRequest() {
@@ -46,7 +46,7 @@ class TypeSafeRequestTest {
         var input = withState(state);
         var expected = JSON.readTree(JSON.writeValueAsBytes(input));
 
-        byte[] bytes = TypeSafeRequest.prepare(Map.of(), Map.of(), input);
+        byte[] bytes = TypeSafeRequest.prepare(Map.of(), input);
         assertThat(JSON.readTree(JSON.writeValueAsBytes(input))).isEqualTo(expected);
         state.put("nested", List.of("changed"));
         var body = JSON.readTree(bytes);
@@ -120,16 +120,23 @@ class TypeSafeRequestTest {
         assertThatThrownBy(() -> build(input)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("input: exceeds 32 MiB JSON body");
     }
 
-    @Test void rejectsEveryLeafKeyAndUnknownExecutorKeys() {
+    @Test void rejectsInvalidAttemptLimits() {
+        for (Object value : Arrays.asList(null, true, "1", 1.0, 1.5, 0, -1, 4, BigInteger.ONE.shiftLeft(64).add(BigInteger.ONE))) {
+            assertThatThrownBy(() -> TypeSafeRequest.maxAttempts(Collections.singletonMap("max_attempts", value)))
+                    .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("skillConfig.max_attempts");
+        }
+    }
+
+    @Test void rejectsUnknownLeafAndExecutorKeys() {
         var oldValues = Map.of("request", request(), "bindings", Map.of("/state", "/ticket"), "api_key", "key",
                 "base_url", "http://localhost", "extra", true);
         for (var entry : oldValues.entrySet()) {
             for (Object value : Arrays.asList(entry.getValue(), "", Map.of(), null)) {
-                assertThatThrownBy(() -> TypeSafeRequest.prepare(Collections.singletonMap(entry.getKey(), value), Map.of("api_key", "valid"), request()))
+                assertThatThrownBy(() -> TypeSafeRequest.maxAttempts(Collections.singletonMap(entry.getKey(), value)))
                         .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("skillConfig." + entry.getKey() + ":");
             }
         }
-        assertThatThrownBy(() -> TypeSafeRequest.prepare(Map.of(), Map.of("api_key", "valid", "extra", true), request()))
+        assertThatThrownBy(() -> TypeSafeRequest.prepare(Map.of("api_key", "valid", "extra", true), request()))
                 .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("executorConfig.extra:");
     }
 }

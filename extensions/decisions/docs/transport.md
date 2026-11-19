@@ -46,7 +46,7 @@ Fixed pack defaults are:
 | Watchdog/retry-wait polling interval | At most 25 ms |
 | Error body capture | 64 KiB UTF-8 prefix |
 
-These controls have no YAML/property customization keys. Each attempt is capped by
+The leaf YAML setting `config.max_attempts` can lower the maximum physical sends to one or two. All other controls are fixed. Each attempt is capped by
 live remaining execution time, and an earlier cap is never extended by later reads.
 No deadline means the pack total still applies. Expired/cancelled/interrupted work
 cannot send or retry; retry waits cooperate and preserve interruption. Progressing
